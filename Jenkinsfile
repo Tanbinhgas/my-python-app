@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -14,23 +10,45 @@ pipeline {
 
         stage('Compile') {
             steps {
-                sh '''
-                    python3 -m venv $VENV_DIR
-                    . $VENV_DIR/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                    python -m py_compile src/myapp/*.py
-                '''
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            python3 -m venv venv
+                            . venv/bin/activate
+                            pip install --upgrade pip
+                            pip install -r requirements.txt
+                            python -m py_compile src/myapp/*.py
+                        '''
+                    } else {
+                        bat '''
+                            python -m venv venv
+                            call venv\\Scripts\\activate.bat
+                            python -m pip install --upgrade pip
+                            pip install -r requirements.txt
+                            python -m py_compile src\\myapp\\*.py
+                        '''
+                    }
+                }
             }
         }
 
         stage('Unit Test') {
             steps {
-                sh '''
-                    . $VENV_DIR/bin/activate
-                    export PYTHONPATH=src
-                    pytest tests/ --junitxml=result.xml
-                '''
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            . venv/bin/activate
+                            export PYTHONPATH=src
+                            pytest tests/ --junitxml=result.xml
+                        '''
+                    } else {
+                        bat '''
+                            call venv\\Scripts\\activate.bat
+                            set PYTHONPATH=src
+                            pytest tests/ --junitxml=result.xml
+                        '''
+                    }
+                }
             }
             post {
                 always {
@@ -41,10 +59,19 @@ pipeline {
 
         stage('Package') {
             steps {
-                sh '''
-                    . $VENV_DIR/bin/activate
-                    python setup.py sdist bdist_wheel
-                '''
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            . venv/bin/activate
+                            python setup.py sdist bdist_wheel
+                        '''
+                    } else {
+                        bat '''
+                            call venv\\Scripts\\activate.bat
+                            python setup.py sdist bdist_wheel
+                        '''
+                    }
+                }
                 archiveArtifacts artifacts: 'dist/*.whl, dist/*.tar.gz', fingerprint: true
             }
         }
