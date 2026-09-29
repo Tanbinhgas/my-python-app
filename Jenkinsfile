@@ -17,7 +17,7 @@ pipeline {
                             . venv/bin/activate
                             pip install --upgrade pip
                             pip install -r requirements.txt
-                            python -m py_compile src/myapp/*.py
+                            python -m compileall src/myapp
                         '''
                     } else {
                         bat '''
@@ -25,7 +25,7 @@ pipeline {
                             call venv\\Scripts\\activate.bat
                             python -m pip install --upgrade pip
                             pip install -r requirements.txt
-                            python -m py_compile src\\myapp\\*.py
+                            python -m compileall src\\myapp
                         '''
                     }
                 }
